@@ -21,12 +21,15 @@ class _MapViewState extends State<MapView> {
     /// Add destination marker
     _addMarker(LatLng(_destLatitude, _destLongitude), "destination",
         BitmapDescriptor.defaultMarkerWithHue(90));
+
+    /// Get and draw polyline
+    _createPolylines();
   }
 
   GoogleMapController mapController;
 
   // this will hold the generated polylines
-  Set<Polyline> _polylines = {};
+  Map<PolylineId, Polyline> polylines = {};
   // this will hold each polyline coordinate as Lat and Lng pairs
   List<LatLng> polylineCoordinates = [];
   // this is the key object - the PolylinePoints
@@ -36,12 +39,11 @@ class _MapViewState extends State<MapView> {
   double _originLatitude = 56.94801, _originLongitude = 24.10507;
   double _destLatitude = 59.637251887193415,
       _destLongitude = 24.720301818049453;
-// this set will hold my markers
-  final List<Marker> markers = [];
 
-  showFBlikes(id) {
-    print('tap marker $id');
-  }
+  // this will hold my markers
+  Map<MarkerId, Marker> markers = {};
+
+  showFBlikes(id) {}
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +62,8 @@ class _MapViewState extends State<MapView> {
                   zoom: 8.4746,
                 ),
                 onMapCreated: _onMapCreated,
-                polylines: _polylines,
-                markers: markers.toSet(),
+                markers: Set<Marker>.of(markers.values),
+                polylines: Set<Polyline>.of(polylines.values),
                 compassEnabled: true,
                 tiltGesturesEnabled: false,
               ),
@@ -72,9 +74,6 @@ class _MapViewState extends State<MapView> {
                 child: RaisedButton(
                   onPressed: () {
                     _moveCameraToCenter();
-
-                    /// Get and draw polyline
-                    _createPolylines();
                   },
                   child: Row(
                     children: [
@@ -108,7 +107,7 @@ class _MapViewState extends State<MapView> {
     MarkerId markerId = MarkerId(id);
     Marker marker =
         Marker(markerId: markerId, icon: descriptor, position: position);
-    markers.add(marker);
+    markers[markerId] = marker;
     print("Markers created!");
   }
 
@@ -117,26 +116,26 @@ class _MapViewState extends State<MapView> {
     polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints
         .getRouteBetweenCoordinates(
-      Secrets.API_KEY, // Google Maps API Key
+      Secrets.GOOGLE_API_KEY, // Google Maps API Key
       PointLatLng(_originLatitude, _originLongitude),
       PointLatLng(_destLatitude, _destLongitude),
-      travelMode: TravelMode.transit,
+      travelMode: TravelMode.driving,
     )
         .catchError((onError) {
       print("\n\nAn error occured possibly due to network issues\n\n");
     });
 
-    print(result.toString());
     if (result != null) {
       print("\n\nResults not null.\n\n");
+      print('Points length : ' + result.points.length.toString());
 
       if (result.points.isNotEmpty) {
         result.points.forEach((PointLatLng point) {
           polylineCoordinates.add(LatLng(point.latitude, point.longitude));
         });
+      } else {
+        print("No coordinate points available.");
       }
-
-      print(polylineCoordinates.toString());
 
       setState(() {
         PolylineId id = PolylineId('poly');
@@ -146,8 +145,10 @@ class _MapViewState extends State<MapView> {
           points: polylineCoordinates,
           width: 3,
         );
-        _polylines.add(polyline);
-        print('\n\nPolyline made.\n\n');
+        polylines[id] = polyline;
+        setState(() {
+          print('\n\nPolyline made.\n\n');
+        });
 
         // add the constructed polyline as a set of points
         // to the polyline set, which will eventually
