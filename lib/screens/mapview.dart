@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_maps_webservice/places.dart' as places;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:traveler/api_key.dart';
+import 'package:traveler/utils/api_key.dart';
+import 'package:traveler/utils/coordinates.dart';
 
 class MapView extends StatefulWidget {
   @override
@@ -10,22 +13,6 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
-  @override
-  void initState() {
-    super.initState();
-
-    /// Add origin marker
-    _addMarker(LatLng(_originLatitude, _originLongitude), "origin",
-        BitmapDescriptor.defaultMarker);
-
-    /// Add destination marker
-    _addMarker(LatLng(_destLatitude, _destLongitude), "destination",
-        BitmapDescriptor.defaultMarkerWithHue(90));
-
-    /// Get and draw polyline
-    _createPolylines();
-  }
-
   GoogleMapController mapController;
 
   // this will hold the generated polylines
@@ -36,14 +23,23 @@ class _MapViewState extends State<MapView> {
   // which generates every polyline between start and finish
   PolylinePoints polylinePoints = PolylinePoints();
 
-  double _originLatitude = 56.94801, _originLongitude = 24.10507;
-  double _destLatitude = 59.637251887193415,
-      _destLongitude = 24.720301818049453;
-
   // this will hold my markers
   Map<MarkerId, Marker> markers = {};
+  @override
+  void initState() {
+    super.initState();
 
-  showFBlikes(id) {}
+    /// Add origin marker
+    _addMarker(LatLng(originLatitude, originLongitude), "origin",
+        BitmapDescriptor.defaultMarker, '', '', '', false);
+
+    /// Add destination marker
+    _addMarker(LatLng(destLatitude, destLongitude), "destination",
+        BitmapDescriptor.defaultMarkerWithHue(90), '', '', '', false);
+
+    /// Get and draw polyline
+    _createPolylines();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +54,7 @@ class _MapViewState extends State<MapView> {
                 },
                 mapType: MapType.normal,
                 initialCameraPosition: CameraPosition(
-                  target: LatLng(_originLatitude, _originLongitude),
+                  target: LatLng(originLatitude, originLongitude),
                   zoom: 8.4746,
                 ),
                 onMapCreated: _onMapCreated,
@@ -74,9 +70,13 @@ class _MapViewState extends State<MapView> {
                 child: RaisedButton(
                   onPressed: () {
                     _moveCameraToCenter();
+                    _showNearbyRestaurants();
                   },
                   child: Row(
                     children: [
+                      SizedBox(
+                        width: 10,
+                      ),
                       Icon(Icons.place, color: Colors.redAccent),
                       SizedBox(
                         width: 10,
@@ -103,12 +103,32 @@ class _MapViewState extends State<MapView> {
     controller.animateCamera(CameraUpdate.newLatLng(coordinate));
   }
 
-  _addMarker(LatLng position, String id, BitmapDescriptor descriptor) {
-    MarkerId markerId = MarkerId(id);
-    Marker marker =
-        Marker(markerId: markerId, icon: descriptor, position: position);
+  _addMarker(
+      LatLng position,
+      String nameId,
+      BitmapDescriptor descriptor,
+      String infoTitle,
+      String infoVicinity,
+      String infoRating,
+      bool isRestaurant) {
+    MarkerId markerId = MarkerId(nameId);
+    Marker marker = Marker(
+        markerId: markerId,
+        icon: descriptor,
+        position: position,
+        draggable: false,
+        infoWindow: isRestaurant
+            ? InfoWindow(
+                title: infoTitle,
+                onTap: () {
+                  return AlertDialog(
+                    title: Text(infoTitle),
+                    content: Text('Rating: $infoRating'),
+                  );
+                })
+            : InfoWindow());
     markers[markerId] = marker;
-    print("Markers created!");
+    print("Marker created!");
   }
 
   // Create the polylines for showing the route between two places
@@ -117,8 +137,8 @@ class _MapViewState extends State<MapView> {
     PolylineResult result = await polylinePoints
         .getRouteBetweenCoordinates(
       Secrets.GOOGLE_API_KEY, // Google Maps API Key
-      PointLatLng(_originLatitude, _originLongitude),
-      PointLatLng(_destLatitude, _destLongitude),
+      PointLatLng(originLatitude, originLongitude),
+      PointLatLng(destLatitude, destLongitude),
       travelMode: TravelMode.driving,
     )
         .catchError((onError) {
@@ -161,12 +181,35 @@ class _MapViewState extends State<MapView> {
 
   _moveCameraToCenter() async {
     final GoogleMapController controller = mapController;
-    double _centerLatitude = 58.21996037527976;
-    double _centerLongitude = 24.50057526961153;
 
     controller.animateCamera(
-      CameraUpdate.newLatLngZoom(
-          LatLng(_centerLatitude, _centerLongitude), 6.0),
+      CameraUpdate.newLatLngZoom(LatLng(centerLatitude, centerLongitude), 8.0),
     );
+  }
+
+  _showNearbyRestaurants() async {
+    places.GoogleMapsPlaces _places =
+        places.GoogleMapsPlaces(apiKey: Secrets.GOOGLE_API_KEY);
+
+    final centerLocation = places.Location(centerLatitude, centerLongitude);
+    final result = await _places.searchNearbyWithRadius(centerLocation, 200000,
+        type: "resturant");
+
+    if (result.status == "OK") {
+      print(result.results.toString());
+      print("\nNearby request successful!\n");
+      setState(() {
+        result.results.forEach((data) {
+          _addMarker(
+              LatLng(data.geometry.location.lat, data.geometry.location.lng),
+              data.name,
+              BitmapDescriptor.defaultMarkerWithHue(20),
+              data.name,
+              data.reference,
+              data.rating.toString(),
+              true);
+        });
+      });
+    }
   }
 }
