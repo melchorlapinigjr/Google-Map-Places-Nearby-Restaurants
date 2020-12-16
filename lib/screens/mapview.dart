@@ -120,10 +120,11 @@ class _MapViewState extends State<MapView> {
         infoWindow: isRestaurant
             ? InfoWindow(
                 title: infoTitle,
+                snippet: "Rating: $infoRating",
                 onTap: () {
                   return AlertDialog(
                     title: Text(infoTitle),
-                    content: Text('Rating: $infoRating'),
+                    content: Text(infoVicinity),
                   );
                 })
             : InfoWindow());
@@ -203,7 +204,7 @@ class _MapViewState extends State<MapView> {
           _addMarker(
               LatLng(data.geometry.location.lat, data.geometry.location.lng),
               data.name,
-              BitmapDescriptor.defaultMarkerWithHue(20),
+              BitmapDescriptor.defaultMarkerWithHue(25),
               data.name,
               data.reference,
               data.rating.toString(),
