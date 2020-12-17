@@ -1,7 +1,10 @@
+import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:traveler/map_observer.dart';
 import 'package:traveler/screens/mapview.dart';
 
 void main() {
+  Bloc.observer = MapBlocObserver();
   runApp(MyApp());
 }
 
