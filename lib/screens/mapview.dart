@@ -69,21 +69,27 @@ class _MapViewState extends State<MapView> {
     );
   }
 
-  GoogleMap buildGoogleMap() {
-    return GoogleMap(
-      onTap: (cordinate) {
-        _animateCamera(cordinate);
+  buildGoogleMap() {
+    return BlocBuilder<MapsCubit, MapsState>(
+      builder: (context, state) {
+        return GoogleMap(
+          onTap: (cordinate) {
+            _animateCamera(cordinate);
+          },
+          mapType: MapType.normal,
+          initialCameraPosition: CameraPosition(
+            target: LatLng(originLatitude, originLongitude),
+            zoom: 8.4746,
+          ),
+          onMapCreated: _onMapCreated,
+
+          //To Do here
+          // markers: Set<Marker>.of(),
+          // polylines: Set<Polyline>.of(),
+          compassEnabled: true,
+          tiltGesturesEnabled: false,
+        );
       },
-      mapType: MapType.normal,
-      initialCameraPosition: CameraPosition(
-        target: LatLng(originLatitude, originLongitude),
-        zoom: 8.4746,
-      ),
-      onMapCreated: _onMapCreated,
-      markers: Set<Marker>.of(markers.values),
-      polylines: Set<Polyline>.of(polylines.values),
-      compassEnabled: true,
-      tiltGesturesEnabled: false,
     );
   }
 

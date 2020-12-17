@@ -21,13 +21,6 @@ class MapLoading extends MapsState {
   List<Object> get props => [];
 }
 
-class MapsLoaded extends MapsState {
-  const MapsLoaded();
-
-  @override
-  List<Object> get props => [];
-}
-
 class PolylinesLoadingState extends MapsState {
   const PolylinesLoadingState();
 
