@@ -42,6 +42,7 @@ class MapsCubit extends Cubit<MapsState> {
 
         //Assign gathered polyline coordinates to polylines
         polylines(polylineCoordinates);
+        
       } else {
         print("No coordinate points available.");
       }
