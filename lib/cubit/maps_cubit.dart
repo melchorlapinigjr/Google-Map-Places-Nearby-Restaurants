@@ -92,7 +92,7 @@ class MapsCubit extends Cubit<MapsState> {
   }
 
   Future<void> getNearbyRestaurants() async {
-    _loadingState();
+    emit(MapLoading());
 
     //Add route marker
     setInitialRouteMarkers();
@@ -125,18 +125,17 @@ class MapsCubit extends Cubit<MapsState> {
       });
 
       emit(PolylinesLoadedState(markers: markers, polylines: polylines));
+      print("\n\nMarkers and Polylines values");
+      print(markers.toString());
+      print(polylines.values.length.toString());
     }
-  }
-
-  _loadingState() {
-    emit(MapLoading());
   }
 
   Future<void> moveCameraToCenter(mapController) async {
     final GoogleMapController controller = mapController;
 
     await controller.animateCamera(
-      CameraUpdate.newLatLngZoom(LatLng(centerLatitude, centerLongitude), 8.0),
+      CameraUpdate.newLatLngZoom(LatLng(centerLatitude, centerLongitude), 7.5),
     );
   }
 

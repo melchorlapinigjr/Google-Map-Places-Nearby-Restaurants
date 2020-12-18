@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -42,46 +41,47 @@ class _MapViewState extends State<MapView> {
 
   Positioned buildPositionedWidget() {
     return Positioned(
-        left: 20,
-        top: 10,
-        right: 20,
-        child: BlocBuilder<MapsCubit, MapsState>(
-          builder: (context, state) {
-            return RaisedButton(
-              onPressed: () {
-                //move camera to center
-                _mapsCubit.moveCameraToCenter(mapController);
-                //show nearby restaurant
-                _mapsCubit.getNearbyRestaurants();
-              },
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Icon(Icons.place, color: Colors.redAccent),
-                  SizedBox(
-                    width: 10,
-                  ),
-                  Text("Show Nearby Restaurants"),
-                ],
-              ),
-            );
-          },
-        ));
+      left: 20,
+      top: 10,
+      right: 20,
+      child: RaisedButton(
+        onPressed: () {
+          //move camera to center
+          _mapsCubit.moveCameraToCenter(mapController);
+          //show nearby restaurant
+          _mapsCubit.getNearbyRestaurants();
+        },
+        child: Row(
+          children: [
+            SizedBox(
+              width: 10,
+            ),
+            Icon(Icons.place, color: Colors.redAccent),
+            SizedBox(
+              width: 10,
+            ),
+            Text("Show Nearby Restaurants"),
+          ],
+        ),
+      ),
+    );
   }
 
   buildGoogleMap() {
-    return BlocBuilder<MapsCubit, MapsState>(
-      builder: (context, state) {
-        Iterable<Marker> markers = {};
-        Iterable<Polyline> polylines = [];
+    Map<MarkerId, Marker> markers = {};
+    Map<PolylineId, Polyline> polylines = {};
 
+    return BlocConsumer<MapsCubit, MapsState>(
+      listener: (context, state) {
         if (state is PolylinesLoadedState) {
-          markers = state.markers.values;
-          polylines = state.polylines.values;
-        }
+          markers = state.markers;
+          polylines = state.polylines;
 
+          print('State markers: $markers ');
+          print('State polylines: $polylines ');
+        }
+      },
+      builder: (context, state) {
         return GoogleMap(
           onTap: (cordinate) {
             _mapsCubit.animateCamera(mapController, cordinate);
@@ -94,8 +94,8 @@ class _MapViewState extends State<MapView> {
           onMapCreated: _onMapCreated,
 
           //To Do here
-          markers: Set<Marker>.of(markers),
-          polylines: Set<Polyline>.of(polylines),
+          markers: Set<Marker>.of(markers.values),
+          polylines: Set<Polyline>.of(polylines.values),
           compassEnabled: true,
           tiltGesturesEnabled: false,
         );
