@@ -7,8 +7,8 @@ abstract class MapsState extends Equatable {
   List<Object> get props => [];
 }
 
-class MapsInitial extends MapsState {
-  const MapsInitial();
+class MapInitial extends MapsState {
+  const MapInitial();
 
   @override
   List<Object> get props => [];
@@ -21,33 +21,11 @@ class MapLoading extends MapsState {
   List<Object> get props => [];
 }
 
-class PolylinesLoadingState extends MapsState {
-  const PolylinesLoadingState();
-
-  @override
-  List<Object> get props => [];
-}
-
 class PolylinesLoadedState extends MapsState {
   final Map<PolylineId, Polyline> polylines;
-
-  PolylinesLoadedState(this.polylines);
-  @override
-  List<Object> get props => [polylines];
-}
-
-class MarkersLoadedState extends MapsState {
   final Map<MarkerId, Marker> markers;
 
-  MarkersLoadedState(this.markers);
+  PolylinesLoadedState({this.polylines, this.markers});
   @override
-  List<Object> get props => [markers];
-}
-
-class MapAnimateCameraState extends MapsState {
-  final coordinate;
-
-  MapAnimateCameraState(this.coordinate);
-  @override
-  List<Object> get props => [coordinate];
+  List<Object> get props => [polylines, markers];
 }

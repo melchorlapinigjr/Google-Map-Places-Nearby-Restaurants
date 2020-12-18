@@ -10,18 +10,18 @@ import 'package:traveler/utils/coordinates.dart';
 part 'maps_state.dart';
 
 class MapsCubit extends Cubit<MapsState> {
-  MapsCubit() : super(MapsInitial());
+  MapsCubit() : super(MapInitial());
 
-  Future<void> initMapController() async {}
+  // this will hold my markers
+  final Map<MarkerId, Marker> markers = {};
 
+  // this is the key object - the PolylinePoints
+  // which generates every polyline between start and finish
+  final PolylinePoints polylinePoints = PolylinePoints();
   createPoliylineCoordinates() async {
     _loadingState();
     // this will hold each polyline coordinate as Lat and Lng pairs
     final List<LatLng> polylineCoordinates = [];
-
-    // this is the key object - the PolylinePoints
-    // which generates every polyline between start and finish
-    final PolylinePoints polylinePoints = PolylinePoints();
 
     PolylineResult result = await polylinePoints
         .getRouteBetweenCoordinates(
@@ -42,7 +42,6 @@ class MapsCubit extends Cubit<MapsState> {
 
         //Assign gathered polyline coordinates to polylines
         polylines(polylineCoordinates);
-        
       } else {
         print("No coordinate points available.");
       }
@@ -63,12 +62,7 @@ class MapsCubit extends Cubit<MapsState> {
       width: 3,
     );
     polylines[id] = polyline;
-
-    emit(PolylinesLoadedState(polylines));
   }
-
-  // this will hold my markers
-  final Map<MarkerId, Marker> markers = {};
 
   addMarker(
       LatLng position,
@@ -95,13 +89,13 @@ class MapsCubit extends Cubit<MapsState> {
     print("Marker created!");
   }
 
-  animateCamera(coordinate) {
-    emit(MapAnimateCameraState(coordinate));
-  }
-
-  nearbyRestaurants() async {
+  Future<void> getNearbyRestaurants() async {
     _loadingState();
 
+    //Add route marker
+    setInitialRouteMarkers();
+
+    //Get nearby reatuarants
     mapweb.GoogleMapsPlaces _places =
         mapweb.GoogleMapsPlaces(apiKey: Secrets.GOOGLE_API_KEY);
 
@@ -113,6 +107,7 @@ class MapsCubit extends Cubit<MapsState> {
       print(result.results.toString());
       print("\nNearby request successful!\n");
 
+      //Add results to marker
       result.results.forEach((data) {
         addMarker(
             LatLng(data.geometry.location.lat, data.geometry.location.lng),
@@ -123,8 +118,6 @@ class MapsCubit extends Cubit<MapsState> {
             data.rating.toString(),
             true);
       });
-
-      emit(MarkersLoadedState(markers));
     }
   }
 
@@ -132,12 +125,17 @@ class MapsCubit extends Cubit<MapsState> {
     emit(MapLoading());
   }
 
-  moveCameraToCenter(mapController) async {
+  Future<void> moveCameraToCenter(mapController) async {
     final GoogleMapController controller = mapController;
 
-    controller.animateCamera(
+    await controller.animateCamera(
       CameraUpdate.newLatLngZoom(LatLng(centerLatitude, centerLongitude), 8.0),
     );
+  }
+
+  Future<void> animateCamera(coordinate, mapController) async {
+    final GoogleMapController controller = mapController;
+    await controller.animateCamera(CameraUpdate.newLatLng(coordinate));
   }
 
   setInitialRouteMarkers() {
@@ -148,6 +146,5 @@ class MapsCubit extends Cubit<MapsState> {
     /// Add destination marker
     addMarker(LatLng(destLatitude, destLongitude), "destination",
         BitmapDescriptor.defaultMarkerWithHue(90), '', '', '', false);
-    emit(MarkersLoadedState(markers));
   }
 }

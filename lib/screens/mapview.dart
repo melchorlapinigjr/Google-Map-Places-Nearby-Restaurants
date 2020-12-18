@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:traveler/cubit/maps_cubit.dart';
 import 'package:traveler/utils/coordinates.dart';
@@ -20,7 +19,7 @@ class _MapViewState extends State<MapView> {
   }
 
   //MapsCubit instance
-  MapsCubit mapsCubit = MapsCubit();
+  MapsCubit _mapsCubit = MapsCubit();
 
   @override
   Widget build(BuildContext context) {
@@ -43,38 +42,49 @@ class _MapViewState extends State<MapView> {
 
   Positioned buildPositionedWidget() {
     return Positioned(
-      left: 20,
-      top: 10,
-      right: 20,
-      child: RaisedButton(
-        onPressed: () {
-          //move camera to center
-          mapsCubit.moveCameraToCenter(mapController);
-          //show nearby restaurant
-          mapsCubit.nearbyRestaurants();
-        },
-        child: Row(
-          children: [
-            SizedBox(
-              width: 10,
-            ),
-            Icon(Icons.place, color: Colors.redAccent),
-            SizedBox(
-              width: 10,
-            ),
-            Text("Show Nearby Restaurants"),
-          ],
-        ),
-      ),
-    );
+        left: 20,
+        top: 10,
+        right: 20,
+        child: BlocBuilder<MapsCubit, MapsState>(
+          builder: (context, state) {
+            return RaisedButton(
+              onPressed: () {
+                //move camera to center
+                _mapsCubit.moveCameraToCenter(mapController);
+                //show nearby restaurant
+                _mapsCubit.getNearbyRestaurants();
+              },
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Icon(Icons.place, color: Colors.redAccent),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Text("Show Nearby Restaurants"),
+                ],
+              ),
+            );
+          },
+        ));
   }
 
   buildGoogleMap() {
     return BlocBuilder<MapsCubit, MapsState>(
       builder: (context, state) {
+        Iterable<Marker> markers = {};
+        Iterable<Polyline> polylines = [];
+
+        if (state is PolylinesLoadedState) {
+          markers = state.markers.values;
+          polylines = state.polylines.values;
+        }
+
         return GoogleMap(
           onTap: (cordinate) {
-            _animateCamera(cordinate);
+            _mapsCubit.animateCamera(mapController, cordinate);
           },
           mapType: MapType.normal,
           initialCameraPosition: CameraPosition(
@@ -84,8 +94,8 @@ class _MapViewState extends State<MapView> {
           onMapCreated: _onMapCreated,
 
           //To Do here
-          // markers: Set<Marker>.of(),
-          // polylines: Set<Polyline>.of(),
+          markers: Set<Marker>.of(markers),
+          polylines: Set<Polyline>.of(polylines),
           compassEnabled: true,
           tiltGesturesEnabled: false,
         );
@@ -96,18 +106,5 @@ class _MapViewState extends State<MapView> {
   void _onMapCreated(GoogleMapController controller) async {
     mapController = controller;
     print("\n\nMap ready.\n\n");
-  }
-
-  Future<void> _animateCamera(coordinate) async {
-    final GoogleMapController controller = mapController;
-    controller.animateCamera(CameraUpdate.newLatLng(coordinate));
-  }
-
-  moveCameraToCenter() async {
-    final GoogleMapController controller = mapController;
-
-    controller.animateCamera(
-      CameraUpdate.newLatLngZoom(LatLng(centerLatitude, centerLongitude), 8.0),
-    );
   }
 }
