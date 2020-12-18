@@ -133,7 +133,7 @@ class MapsCubit extends Cubit<MapsState> {
     final GoogleMapController controller = mapController;
 
     await controller.animateCamera(
-      CameraUpdate.newLatLngZoom(LatLng(centerLatitude, centerLongitude), 7.5),
+      CameraUpdate.newLatLngZoom(LatLng(centerLatitude, centerLongitude), 7.2),
     );
   }
 
