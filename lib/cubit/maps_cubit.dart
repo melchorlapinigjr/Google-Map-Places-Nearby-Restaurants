@@ -18,8 +18,11 @@ class MapsCubit extends Cubit<MapsState> {
   // this is the key object - the PolylinePoints
   // which generates every polyline between start and finish
   final PolylinePoints polylinePoints = PolylinePoints();
-  createPoliylineCoordinates() async {
-    _loadingState();
+
+  // this will hold the generated polylines
+  final Map<PolylineId, Polyline> polylines = {};
+
+  Future<void> routePolylineCoordinates() async {
     // this will hold each polyline coordinate as Lat and Lng pairs
     final List<LatLng> polylineCoordinates = [];
 
@@ -41,7 +44,9 @@ class MapsCubit extends Cubit<MapsState> {
         });
 
         //Assign gathered polyline coordinates to polylines
-        polylines(polylineCoordinates);
+        //Draw polylines
+
+        _setPolylines(polylineCoordinates);
       } else {
         print("No coordinate points available.");
       }
@@ -50,10 +55,7 @@ class MapsCubit extends Cubit<MapsState> {
     }
   }
 
-  polylines(List<LatLng> polylineCoordinates) {
-    // this will hold the generated polylines
-    final Map<PolylineId, Polyline> polylines = {};
-
+  _setPolylines(polylineCoordinates) {
     final PolylineId id = PolylineId('poly');
     Polyline polyline = Polyline(
       polylineId: id,
@@ -95,6 +97,9 @@ class MapsCubit extends Cubit<MapsState> {
     //Add route marker
     setInitialRouteMarkers();
 
+    //Route coordinates to draw polylines
+    routePolylineCoordinates();
+
     //Get nearby reatuarants
     mapweb.GoogleMapsPlaces _places =
         mapweb.GoogleMapsPlaces(apiKey: Secrets.GOOGLE_API_KEY);
@@ -118,6 +123,8 @@ class MapsCubit extends Cubit<MapsState> {
             data.rating.toString(),
             true);
       });
+
+      emit(PolylinesLoadedState(markers: markers, polylines: polylines));
     }
   }
 
