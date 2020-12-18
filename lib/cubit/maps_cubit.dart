@@ -123,12 +123,10 @@ class MapsCubit extends Cubit<MapsState> {
             data.rating.toString(),
             true);
       });
-
-      emit(PolylinesLoadedState(markers: markers, polylines: polylines));
-      print("\n\nMarkers and Polylines values");
-      print(markers.toString());
-      print(polylines.values.length.toString());
     }
+    emit(PolylinesLoadedState(markers: markers, polylines: polylines));
+    print('Markers $markers.toString()');
+    print('Polyline lenght: $polylines.values.length.toString()');
   }
 
   Future<void> moveCameraToCenter(mapController) async {

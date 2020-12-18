@@ -24,15 +24,12 @@ class _MapViewState extends State<MapView> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: BlocProvider(
-          create: (_) => MapsCubit(),
-          child: Container(
-            child: Stack(
-              children: [
-                buildGoogleMap(),
-                buildPositionedWidget(),
-              ],
-            ),
+        child: Container(
+          child: Stack(
+            children: [
+              buildGoogleMap(),
+              buildPositionedWidget(),
+            ],
           ),
         ),
       ),
@@ -60,7 +57,7 @@ class _MapViewState extends State<MapView> {
             SizedBox(
               width: 10,
             ),
-            Text("Show Nearby Restaurants"),
+            Text("Show Route and Nearby Restaurants"),
           ],
         ),
       ),
@@ -71,17 +68,13 @@ class _MapViewState extends State<MapView> {
     Map<MarkerId, Marker> markers = {};
     Map<PolylineId, Polyline> polylines = {};
 
-    return BlocConsumer<MapsCubit, MapsState>(
-      listener: (context, state) {
+    return BlocBuilder(
+      cubit: _mapsCubit,
+      builder: (context, state) {
         if (state is PolylinesLoadedState) {
           markers = state.markers;
           polylines = state.polylines;
-
-          print('State markers: $markers ');
-          print('State polylines: $polylines ');
         }
-      },
-      builder: (context, state) {
         return GoogleMap(
           onTap: (cordinate) {
             _mapsCubit.animateCamera(mapController, cordinate);

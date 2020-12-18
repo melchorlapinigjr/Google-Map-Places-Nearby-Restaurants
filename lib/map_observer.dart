@@ -7,9 +7,9 @@ import 'package:bloc/bloc.dart';
 
 class MapBlocObserver extends BlocObserver {
   @override
-  void onEvent(Bloc bloc, Object event) {
-    print('onEvent $event');
-    super.onEvent(bloc, event);
+  void onChange(Cubit cubit, Change change) {
+    print('Cubit state change: ${cubit.runtimeType} $change');
+    super.onChange(cubit, change);
   }
 
   @override
